@@ -35,13 +35,24 @@ const { chromium } = require(PW);
 
 const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
 const ctx  = browser.contexts()[0];
-const page = await ctx.newPage();
+
+// Reuse an existing tab already on this URL, or navigate a blank tab,
+// or open exactly one new tab — never multiple tabs per session.
+const pages = ctx.pages();
+const target = url.replace(/\/$/, '');
+const existing = pages.find(p => p.url().replace(/\/$/, '') === target
+  || p.url().replace(/\/$/, '').startsWith(target + '/'));
+const blank = pages.find(p => p.url() === 'about:blank' || p.url() === '');
+const page = existing ?? blank ?? await ctx.newPage();
 
 await page.setViewportSize({ width, height });
-await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-
-// Small pause — lets scroll-triggered animations settle before shooting
-await new Promise(r => setTimeout(r, 1500));
+if (existing) {
+  await page.bringToFront();
+} else {
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+  // Small pause — lets scroll-triggered animations settle before shooting
+  await new Promise(r => setTimeout(r, 1500));
+}
 
 await page.screenshot({ path: outputPath, fullPage });
 await browser.close();
