@@ -30,6 +30,7 @@ Before doing anything, determine what the user wants:
 | User intent | Entry point |
 |---|---|
 | "Study this site / what animations/fonts/colors does X use / how is X built" | → **web-study** |
+| "What JS/tech does X use? / What libraries or animation framework does X run on?" | → **web-study** (tech-analysis focus: check animationStack, loaded scripts, data attributes — skip replication plan) |
 | "Build a landing page like X / cinematic scroll / Lenis + Framer" | → **web-study** first to extract tokens, then **cinematic-scroll-landing** |
 | "Comparison video / before and after / record the redesign" | → **scroll-comparison-video** |
 | "Test this / QA my login / check if this works / verify the flow" | → **browser-qa** |

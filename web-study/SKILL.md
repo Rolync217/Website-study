@@ -42,20 +42,46 @@ Returns JSON with:
 - `animationStack` — which JS animation libraries are detected (Framer, GSAP, Lenis, Spline...)
 - `avgPadding` — spacing feel between sections
 
-## Step 4 — Scroll capture (for animation-heavy pages)
+## Step 3b — Interpret the animation stack
 
-If the animation stack shows Framer, GSAP, or Lenis — capture the page in motion:
+Read the `animationStack` JSON and pick the right path:
+
+| What you see | What it means | What to do next |
+|---|---|---|
+| `gsap: true` or `lenis: true` | GSAP ScrollTrigger or Lenis smooth scroll | Scroll-capture with `--lenis` |
+| `framer: true` | Framer Motion scroll-linked animations | Scroll-capture with `--lenis` |
+| `video > 3`, all libraries false | **Video-scrubbing** — animations are pre-rendered videos scrubbed by a custom JS engine | See video-scrubbing section below |
+| `canvas > 0`, all libraries false | WebGL / Three.js or a custom 3D engine | Check `<script src>` names for three.js, babylon.js |
+| All zero, no videos | Pure CSS transitions or very minimal JS | Standard scroll-capture (no `--lenis`), inspect CSS keyframes |
+
+### Video-scrubbing pattern
+
+When `video > 3` and no libraries detected, the page plays pre-rendered video frames
+in sync with scroll position rather than computing animations in real time.
+
+To identify the engine and explain it to the user:
+1. Check the `<script src>` names on the page — proprietary video controllers have clear tells (e.g. Apple's `autofilms.built.js`, `hls.js`)
+2. Look for scroll-coordination data attributes in the HTML: `data-anim-scroll-group`, `data-reveal`, `data-toggle-theme`
+3. Search for `requestAnimationFrame` + `keyframe` in the main JS bundle to confirm the custom engine
+
+Tell the user: *"The animations here are pre-rendered videos. A custom JS engine reads scroll position and scrubs each video's `currentTime` frame by frame — the illusion of real-time motion is actually video playback."*
+
+Run standard scroll-capture (no `--lenis`) to capture the visual progression. Note that video frames may not update in headless scroll — the scroll-capture shows layout and section order, not the video content itself.
+
+## Step 4 — Scroll capture
+
+Use the decision from Step 3b to pick the right flag:
 
 ```bash
-# Standard scroll (no animation library)
+# Standard scroll (CSS transitions, video-scrubbing, or no library detected)
 node ~/.claude/skills/scroll-skills/sys/scroll-capture.js <URL> /tmp/scroll-frames --frames=60
 
-# Lenis / Framer Motion page
+# Lenis / GSAP / Framer Motion page (must fire real wheel events)
 node ~/.claude/skills/scroll-skills/sys/scroll-capture.js <URL> /tmp/scroll-frames --frames=60 --lenis
 ```
 
 Read frames in order. A section that looks different across consecutive frames
-at the same position is pinned/scrubbed. Text that fills dim→bright is a
+at the same scroll position is pinned/scrubbed. Text that fills dim→bright is a
 word-by-word scroll reveal.
 
 ## Step 5 — Handle login walls
@@ -112,5 +138,5 @@ Ground everything in what you actually captured.
 
 - **Guessing colors from a screenshot** — extract-tokens.js gets exact values from getComputedStyle
 - **Assuming OAuth click worked** — screenshot after each step
-- **Using the app's existing tab** — always open a new tab for external sites
+- **Opening multiple tabs** — the sys/ scripts reuse an existing tab on the target URL; don't call ctx.newPage() manually
 - **Trying to beat CAPTCHA** — detect and stop, offer user handoff
