@@ -97,12 +97,9 @@ The skills tell Claude which scripts to run. Claude does not rewrite the code �
 
 The skills use a **separate Chrome profile** at `~/chrome-qa-profile` — isolated from your real browser. The tool only has access to accounts you explicitly log into there.
 
-On first run, `chrome-launch.sh` will:
-1. Quit your regular Chrome (your tabs restore when you reopen it)
-2. Launch QA Chrome with a fresh profile
-3. Pause and ask you to log in if you need Google OAuth
+`chrome-launch.sh` launches QA Chrome **alongside** your existing Chrome window — it does not quit or touch your regular browser. It uses a different `--user-data-dir`, so Chrome runs both profiles simultaneously as separate instances.
 
-This only happens once. After that, the session persists.
+On first run it will pause and ask you to log into Google (or any OAuth account your work needs). This only happens once. After that, the session persists forever.
 
 ---
 
